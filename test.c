@@ -3,7 +3,8 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <unistd.h>
-
+#include <unistd.h>
+#include <stdlib.h>
 int main(int argc, char **argv){
 	FILE* p = fopen("dane.txt", "w"); 
 	if(p == NULL){
@@ -17,13 +18,21 @@ int main(int argc, char **argv){
 	// /proc/sys/kernel/random/entropy_avail
 
 	int buffer[8];
+	int buffer_time[8];
+
+	int ent=0;
 	int loopCount = 0;
 
 	if( !urnd || !rnd){
 		return -1;
 	}
+	fd_set          s;
+    struct timeval  timeout;
 
-	while(1){
+    timeout.tv_sec = 0;
+    timeout.tv_usec = 100000;
+	int time = 0;
+	do {
 		int entAvail = open("/proc/sys/kernel/random/entropy_avail", O_RDONLY);
 		int br1 = read(urnd, &rng1, sizeof(int));
 		int br2 = read(rnd, &rng2, sizeof(int));
@@ -32,18 +41,27 @@ int main(int argc, char **argv){
 		printf(" random: %02x\n", rng2);
 	
 		printf("\nBytes: %d\n", bytesRead);
-		printf("enavail: %s\n", buff);
+		printf("enavail: %d\n", atoi(buff));
 		close(entAvail);
 
-		buffer[loopCount%8];
-		loopCount++;
+		buffer[loopCount++%8] = atoi(buff);
+		buffer_time[loopCount++%8] = time;
 		if(loopCount % 8 == 0){
-			size_t wrEl = fwrite( buffer, sizeof(int),sizeof(buffer)/sizeof(int), p );
+			for(int i =0;i<8;i++){
+				fprintf(p, "%d %d\n", buffer_time[i], buffer[i]);
+			}
+			//size_t wrEl = fwrite( buffer, sizeof(int),sizeof(buffer)/sizeof(int), p );
 		}
-		getchar();
-		
+		//getchar();
+		usleep(1000000);
+		time += 1;
+		fflush(stdout);
+		FD_ZERO(&s);
+		FD_SET(STDIN_FILENO, &s);
+		select(STDIN_FILENO+1, &s, NULL, NULL, &timeout);
+	} while (FD_ISSET(STDIN_FILENO, &s) == 0);
 
-	}
+	fclose(p);
 	close(rnd);
 	close(urnd);
 	
