@@ -17,7 +17,7 @@ int main(int argc, char **argv){
 	
 	// /proc/sys/kernel/random/entropy_avail
 
-	int buffer[8];
+	double buffer[8];
 	int buffer_time[8];
 
 	int ent=0;
@@ -41,16 +41,16 @@ int main(int argc, char **argv){
 		printf(" random: %02x\n", rng2);
 	
 		printf("\nBytes: %d\n", bytesRead);
-		printf("enavail: %d\n", atoi(buff));
+		printf("enavail: %lf\n", atof(buff));
 		close(entAvail);
 
-		buffer[loopCount++%8] = atoi(buff);
+		buffer[loopCount%8] = atoi(buff);
 		buffer_time[loopCount++%8] = time;
 		if(loopCount % 8 == 0){
 			for(int i =0;i<8;i++){
-				fprintf(p, "%d %d\n", buffer_time[i], buffer[i]);
+				fprintf(p, "%d %lf\n", buffer_time[i], buffer[i]);
 			}
-			//size_t wrEl = fwrite( buffer, sizeof(int),sizeof(buffer)/sizeof(int), p );
+			puts("Writing 8 chunks to file.");
 		}
 		//getchar();
 		usleep(1000000);
