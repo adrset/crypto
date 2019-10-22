@@ -7,16 +7,17 @@
 #include <stdlib.h>
 int main(int argc, char **argv){
 	FILE* p = fopen("dane.txt", "w"); 
+	setvbuf( p, (char *)NULL, _IONBF, 0 );
 	if(p == NULL){
 		return -1;
 	}
-	int rng1,rng2;
+	char rng1,rng2;
 	char buff[16];
 	int urnd = open("/dev/random", O_RDONLY);
 	int rnd = open("/dev/random", O_RDONLY);
 	
 	// /proc/sys/kernel/random/entropy_avail
-
+	// check buffering impact!
 	double buffer[8];
 	int buffer_time[8];
 
@@ -27,15 +28,16 @@ int main(int argc, char **argv){
 		return -1;
 	}
 	fd_set          s;
-    struct timeval  timeout;
+	printf("%d", sizeof(int));
+	    struct timeval  timeout;
 
-    timeout.tv_sec = 0;
-    timeout.tv_usec = 100000;
+	timeout.tv_sec = 0;
+	timeout.tv_usec = 100000;
 	int time = 0;
 	do {
 		int entAvail = open("/proc/sys/kernel/random/entropy_avail", O_RDONLY);
-		int br1 = read(urnd, &rng1, sizeof(int));
-		int br2 = read(rnd, &rng2, sizeof(int));
+		int br1 = read(urnd, &rng1, sizeof(char));
+		int br2 = read(rnd, &rng2, sizeof(char));
 		int bytesRead = read(entAvail, buff, 16);
 		printf("urandom: %02x\n", rng1);
 		printf(" random: %02x\n", rng2);
