@@ -11,9 +11,8 @@ int main(int argc, char **argv){
 	if(p == NULL){
 		return -1;
 	}
-	char rng1,rng2;
+	int rng1,rng2;
 	char buff[16];
-	int urnd = open("/dev/random", O_RDONLY);
 	int rnd = open("/dev/random", O_RDONLY);
 	
 	// /proc/sys/kernel/random/entropy_avail
@@ -24,7 +23,7 @@ int main(int argc, char **argv){
 	int ent=0;
 	int loopCount = 0;
 
-	if( !urnd || !rnd){
+	if(!rnd){
 		return -1;
 	}
 	fd_set          s;
@@ -36,13 +35,13 @@ int main(int argc, char **argv){
 	int time = 0;
 	do {
 		int entAvail = open("/proc/sys/kernel/random/entropy_avail", O_RDONLY);
-		int br1 = read(urnd, &rng1, sizeof(char));
-		int br2 = read(rnd, &rng2, sizeof(char));
+
+		int br2 = read(rnd, &rng2, sizeof(int));
 		int bytesRead = read(entAvail, buff, 16);
-		printf("urandom: %02x\n", rng1);
+
 		printf(" random: %02x\n", rng2);
 	
-		printf("\nBytes: %d\n", bytesRead);
+	//	printf("\nBytes: %d\n", bytesRead);
 		printf("enavail: %lf\n", atof(buff));
 		close(entAvail);
 
@@ -50,7 +49,7 @@ int main(int argc, char **argv){
 		buffer_time[loopCount++%8] = time;
 		if(loopCount % 8 == 0){
 			for(int i =0;i<8;i++){
-				fprintf(p, "%d %lf\n", buffer_time[i], buffer[i]);
+				fprintf(p, "%d %.0lf\n", buffer_time[i], buffer[i]);
 			}
 			puts("Writing 8 chunks to file.");
 		}
@@ -65,7 +64,7 @@ int main(int argc, char **argv){
 
 	fclose(p);
 	close(rnd);
-	close(urnd);
+
 	
 	return 0;
 }
