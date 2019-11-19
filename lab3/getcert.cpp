@@ -11,8 +11,9 @@
 #include <arpa/inet.h>
 #include <fstream>
 #include <iostream>
+#include <sstream>
 #include <vector>
-
+#include <algorithm>
 const std::string OUT_FOLDER = "out";
 // Program stworzono korzystając z :
 // https://stackoverflow.com/questions/17852325/how-to-convert-the-x509-structure-into-string
@@ -23,7 +24,28 @@ struct mapping {
     mapping(std::string h, std::string i) : hostname(h), ip(i){};
     std::string hostname;
     std::string ip;
+    std::string pubkey;
+    bool duplicate = false;
+    void setPubkey(std::string in) {pubkey = in;}
+    
 };
+std::ostream& operator<<(std::ostream& in, mapping m) {
+        in << "h:" << m.hostname <<std::endl << "ip:" << m.ip <<std::endl  << "pkey:" << m.pubkey <<std::endl << std::endl ;
+        return in;
+    }
+
+std::string cleanseKey(std::string in) {
+    std::string s(in);
+    std::string toReplace1("-----BEGIN PUBLIC KEY-----");
+    std::string toReplace2("-----END PUBLIC KEY-----");
+    size_t pos = s.find(toReplace1);
+    s = s.replace(pos, toReplace1.length(), "");
+    pos = s.find(toReplace2);
+    s = s.replace(pos, toReplace2.length(), "");
+    s.erase(std::remove(s.begin(), s.end(), '\n'), s.end());
+    return s;
+
+}
 
 char *X509_to_PEM(X509 *cert) {
 
@@ -137,6 +159,33 @@ std::vector<mapping> getIPMapping(char* fname) {
 
     return domains;
 }
+
+std::vector<mapping> getDuplicates(std::vector<mapping> in) {
+    std::vector<mapping> out;
+    for (unsigned int ii=0; ii< in.size() -1; ii++ ){
+        for (unsigned int jj=ii + 1; jj< in.size(); jj++ ){
+            if (in[ii].pubkey.compare(in[jj].pubkey) == 0) {
+                if(!in[ii].duplicate){
+                    out.push_back(in[ii]);
+                    in[ii].duplicate = true;
+                }
+                if(!in[jj].duplicate){
+                    out.push_back(in[jj]);
+                    in[jj].duplicate = true;
+                }
+
+            }
+        }
+    }
+    return out;
+}
+
+void listAll(std::vector<mapping> in) {
+    for (mapping& it: in) {
+        std::cout << it;
+    }
+}
+
  
 int main(int argc, char **argv) {
 	struct timeval  timeout;
@@ -186,6 +235,12 @@ int main(int argc, char **argv) {
                                 RSA_free(rsapubkey);
                                 fflush(pliczek);
                                 fclose(pliczek);
+                                std::ifstream t(OUT_FOLDER + "/" + it.hostname + ".txt");
+                                std::string tmp;
+                                getline( t, tmp, '\0');
+
+                                t.close();
+                                it.setPubkey(cleanseKey(tmp));
                             }
                             X509_free (server_cert);
                         }
@@ -198,4 +253,11 @@ int main(int argc, char **argv) {
         }
         SSL_CTX_free (ctx);
     }
+
+    std::vector<mapping> duplicates = getDuplicates(domains);
+    std::cout << "Found " << duplicates.size() << " duplicates! " << std::endl;
+    listAll(duplicates);
+
 }
+
+
