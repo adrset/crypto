@@ -4,8 +4,6 @@
 #include <openssl/x509.h>
 #include <openssl/rsa.h>
 #include <openssl/ssl.h>
-#include <stdio.h> //printf
-#include <string.h> //memset
 #include <stdlib.h> //for exit(0);
 #include <sys/socket.h>
 #include <errno.h> //For errno - the error number
@@ -14,7 +12,6 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
-#include <sstream>
 
 const std::string OUT_FOLDER = "out";
 // Program stworzono korzystając z :
@@ -58,24 +55,55 @@ char *X509_to_PEM(X509 *cert) {
     BIO_free(bio);
     return pem;
 }
+int a = 0;
+
+std::string* hostname_to_ip(std::string hostname) {
+    int sock;
+    struct addrinfo hints,*res;
+    int n;
+    int err;
+    
+    memset(&hints,0,sizeof(hints));
+    hints.ai_family = AF_UNSPEC; 
+    hints.ai_socktype = SOCK_DGRAM;
+    err = getaddrinfo(hostname.c_str(),"443",&hints,&res);
+    if(err != 0){
+        return nullptr;
+    }
+
+    sock = socket(res->ai_family,res->ai_socktype,0);
+
+    if(sock < 0){
+        return nullptr;     
+    }
+    n = sendto(sock,"HELLO",5,0,res->ai_addr,res->ai_addrlen);
+    if(n<1){
+        return nullptr;
+    }
+    struct sockaddr_in *addr;
+    addr = (struct sockaddr_in *)res->ai_addr; 
+  
+    close(sock);
+    freeaddrinfo(res);
+    return new std::string(inet_ntoa((struct in_addr)addr->sin_addr));
+}
 
 
-
-std::string hostname_to_ip(std::string hostname) {
-	struct hostent *he;
+std::string* hostname_to_ip2(std::string hostname) {
+	struct hostent *he = gethostbyname( hostname.c_str());
 	struct in_addr **addr_list;
 		
-	if ( (he = gethostbyname( hostname.c_str() ) ) == nullptr) {
-		throw "Could not get hostname";
-	}
+	if(he ==  nullptr) {
+        return nullptr;
+    }
 
 	addr_list = (struct in_addr **) he->h_addr_list;
-	
+
 	for(unsigned int i = 0; addr_list[i] != nullptr; i++) 
 	{   
 		//Return the first one;
         std::string istr(inet_ntoa(*addr_list[i]));
-		return istr;
+		return new std::string(istr);
 	}
 	
     throw "Reached end of hostname_to_ip !!! No not null address";
@@ -90,14 +118,20 @@ RSA* getPublicKey(X509* cert)
     return rsa;
 }
 
-std::vector<mapping> getIPMapping(std::string fname) {
+std::vector<mapping> getIPMapping(char* fname) {
     std::ifstream domainfile(fname);
     std::string tmp;
     std::vector<mapping> domains;
     while (domainfile >> tmp) {
-        std::string ipstr;
-        ipstr =hostname_to_ip(tmp.c_str());
-        domains.push_back(mapping(tmp, ipstr));
+        std::string* ipstr = hostname_to_ip2(tmp);
+
+        if(ipstr == nullptr) {
+            continue;
+        }
+        std::cout << tmp.c_str() << " -> " << *ipstr << std::endl;
+
+        domains.push_back(mapping(tmp, *ipstr));
+
     }
     domainfile.close();
 
@@ -105,13 +139,15 @@ std::vector<mapping> getIPMapping(std::string fname) {
 }
  
 int main(int argc, char **argv) {
-	
+	struct timeval  timeout;
+    timeout.tv_sec = 1;
+    timeout.tv_usec = 0;
 	if (argc < 2) {
 		throw "No input parameters!";
 	}
-
+    std::cout << "Mapping start" << std::endl;
     std::vector<mapping> domains = getIPMapping(argv[1]);
-        
+    std::cout<< "Mapping done" << std::endl;
     for (auto& it: domains) {
         struct sockaddr_in sa;
         SSL*     ssl;
@@ -124,12 +160,13 @@ int main(int argc, char **argv) {
         int sd = ::socket (AF_INET, SOCK_STREAM, 0);
         if (sd!=-1 && ctx!=nullptr) {
         
-           
+            setsockopt(sd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(timeout));
+
             memset (&sa, '\0', sizeof(sa));
             sa.sin_family      = AF_INET;
             sa.sin_addr.s_addr = inet_addr (it.ip.c_str());   /* Server IP */
             sa.sin_port        = htons     (443);           /* Server Port number */
-
+            
             int err = ::connect(sd, (struct sockaddr*) &sa, sizeof(sa));
             if (err!=-1) {   
                 ssl = SSL_new (ctx);
@@ -147,6 +184,8 @@ int main(int argc, char **argv) {
                                 FILE * pliczek = fopen((OUT_FOLDER + "/" + it.hostname + ".txt").c_str(), "w");
                                 PEM_write_RSA_PUBKEY(pliczek, rsapubkey);
                                 RSA_free(rsapubkey);
+                                fflush(pliczek);
+                                fclose(pliczek);
                             }
                             X509_free (server_cert);
                         }
