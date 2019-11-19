@@ -2,6 +2,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <openssl/x509.h>
+#include <openssl/rsa.h>
 #include <openssl/ssl.h>
 #include <stdio.h> //printf
 #include <string.h> //memset
@@ -13,6 +14,7 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
+#include <sstream>
 
 const std::string OUT_FOLDER = "out";
 // Program stworzono korzystając z :
@@ -80,6 +82,14 @@ std::string hostname_to_ip(std::string hostname) {
 
 }
 
+RSA* getPublicKey(X509* cert)
+{
+    EVP_PKEY* pkey = X509_get_pubkey(cert);
+    RSA* rsa = EVP_PKEY_get1_RSA(pkey);
+    EVP_PKEY_free(pkey);
+    return rsa;
+}
+
 std::vector<mapping> getIPMapping(std::string fname) {
     std::ifstream domainfile(fname);
     std::string tmp;
@@ -121,25 +131,24 @@ int main(int argc, char **argv) {
             sa.sin_port        = htons     (443);           /* Server Port number */
 
             int err = ::connect(sd, (struct sockaddr*) &sa, sizeof(sa));
-            if (err!=-1)
-            {   
+            if (err!=-1) {   
                 ssl = SSL_new (ctx);
-                if (ssl!=nullptr)
-                {	
+                if (ssl!=nullptr) {	
                     SSL_set_fd(ssl, sd);
                     err = SSL_connect(ssl);
-                    if (err!=-1)
-                    {
+                    if (err!=-1) {
 
                         server_cert = SSL_get_peer_certificate(ssl);
-                        if (server_cert!=nullptr)
-                        {
-                            char * cert = X509_to_PEM(server_cert);
+                        if (server_cert!=nullptr) {
                             std::cout << "Fetched certificate for " <<  it.hostname << std::endl;
+                            
+                            RSA *rsapubkey = getPublicKey(server_cert);
+                            if (nullptr != rsapubkey) {
+                                FILE * pliczek = fopen((OUT_FOLDER + "/" + it.hostname + ".txt").c_str(), "w");
+                                PEM_write_RSA_PUBKEY(pliczek, rsapubkey);
+                                RSA_free(rsapubkey);
+                            }
                             X509_free (server_cert);
-                            std::ofstream output(OUT_FOLDER + "/" + it.hostname + ".txt");
-                            output << (cert);
-                            free (cert);
                         }
                     }
                     SSL_free (ssl);
