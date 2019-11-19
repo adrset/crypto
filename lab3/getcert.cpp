@@ -28,27 +28,27 @@ struct mapping {
 
 char *X509_to_PEM(X509 *cert) {
 
-    BIO *bio = NULL;
-    char *pem = NULL;
+    BIO *bio = nullptr;
+    char *pem = nullptr;
 
-    if (NULL == cert) {
-        return NULL;
+    if (nullptr == cert) {
+        return nullptr;
     }
 
     bio = BIO_new(BIO_s_mem());
-    if (NULL == bio) {
-        return NULL;
+    if (nullptr == bio) {
+        return nullptr;
     }
 
     if (0 == PEM_write_bio_X509(bio, cert)) {
         BIO_free(bio);
-        return NULL;
+        return nullptr;
     }
 
     pem = (char *) malloc(bio->num_write + 1);
-    if (NULL == pem) {
+    if (nullptr == pem) {
         BIO_free(bio);
-        return NULL;    
+        return nullptr;    
     }
 
     memset(pem, 0, bio->num_write + 1);
@@ -62,15 +62,14 @@ char *X509_to_PEM(X509 *cert) {
 std::string hostname_to_ip(std::string hostname) {
 	struct hostent *he;
 	struct in_addr **addr_list;
-	int i;
 		
-	if ( (he = gethostbyname( hostname.c_str() ) ) == NULL) {
+	if ( (he = gethostbyname( hostname.c_str() ) ) == nullptr) {
 		throw "Could not get hostname";
 	}
 
 	addr_list = (struct in_addr **) he->h_addr_list;
 	
-	for(i = 0; addr_list[i] != nullptr; i++) 
+	for(unsigned int i = 0; addr_list[i] != nullptr; i++) 
 	{   
 		//Return the first one;
         std::string istr(inet_ntoa(*addr_list[i]));
@@ -113,7 +112,7 @@ int main(int argc, char **argv) {
         SSL_CTX* ctx = SSL_CTX_new (SSLv23_method());
     
         int sd = ::socket (AF_INET, SOCK_STREAM, 0);
-        if (sd!=-1 && ctx!=NULL) {
+        if (sd!=-1 && ctx!=nullptr) {
         
            
             memset (&sa, '\0', sizeof(sa));
@@ -125,7 +124,7 @@ int main(int argc, char **argv) {
             if (err!=-1)
             {   
                 ssl = SSL_new (ctx);
-                if (ssl!=NULL)
+                if (ssl!=nullptr)
                 {	
                     SSL_set_fd(ssl, sd);
                     err = SSL_connect(ssl);
@@ -133,7 +132,7 @@ int main(int argc, char **argv) {
                     {
 
                         server_cert = SSL_get_peer_certificate(ssl);
-                        if (server_cert!=NULL)
+                        if (server_cert!=nullptr)
                         {
                             char * cert = X509_to_PEM(server_cert);
                             std::cout << "Fetched certificate for " <<  it.hostname << std::endl;
