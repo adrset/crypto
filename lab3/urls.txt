@@ -1,0 +1,4 @@
+google.pl
+home.pl
+twitch.tv
+hebe.pl
