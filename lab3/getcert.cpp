@@ -19,11 +19,13 @@ const std::string OUT_FOLDER = "out";
 // https://stackoverflow.com/questions/17852325/how-to-convert-the-x509-structure-into-string
 // https://www.binarytides.com/hostname-to-ip-address-c-sockets-linux/
 
+// Kompilacja g++ getcert.cpp -o plik -L/usr/lib/x86_64-linux-gnu -I/usr/include/x86_64-linux-gnu -lssl -lcrypto -std=c++11
 struct mapping {
     mapping(std::string h, std::string i) : hostname(h), ip(i){};
     std::string hostname;
     std::string ip;
 };
+
 char *X509_to_PEM(X509 *cert) {
 
     BIO *bio = NULL;
@@ -57,8 +59,7 @@ char *X509_to_PEM(X509 *cert) {
 
 
 
-int hostname_to_ip(const char * hostname , char* ip)
-{
+int hostname_to_ip(const char * hostname , char* ip) {
 	struct hostent *he;
 	struct in_addr **addr_list;
 	int i;
@@ -81,15 +82,9 @@ int hostname_to_ip(const char * hostname , char* ip)
 	
 	return 1;
 }
- 
-int main(int argc, char **argv)
-{
-	
-	if (argc < 2) {
-		fprintf(stderr, "NO INPUT ARGUMENTS");
-		return -1;
-	}
-    std::ifstream domainfile(argv[1]);
+
+std::vector<mapping>& getIPMapping(std::string fname) {
+    std::ifstream domainfile(fname);
     std::string tmp;
     std::vector<mapping> domains;
     while (domainfile >> tmp) {
@@ -98,7 +93,19 @@ int main(int argc, char **argv)
         std::string iptr(ip);
         domains.push_back(mapping(tmp, ip));
     }
-            
+    domainfile.close();
+
+    return domains;
+}
+ 
+int main(int argc, char **argv) {
+	
+	if (argc < 2) {
+		fprintf(stderr, "NO INPUT ARGUMENTS");
+		return -1;
+	}
+
+    std::vector<mapping> domains = getIPMapping(argv[1]);
         
     for (auto& it: domains) {
         struct sockaddr_in sa;
