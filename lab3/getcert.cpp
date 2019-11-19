@@ -59,39 +59,36 @@ char *X509_to_PEM(X509 *cert) {
 
 
 
-int hostname_to_ip(const char * hostname , char* ip) {
+std::string hostname_to_ip(std::string hostname) {
 	struct hostent *he;
 	struct in_addr **addr_list;
 	int i;
 		
-	if ( (he = gethostbyname( hostname ) ) == NULL) 
-	{
-		// get the host info
-		herror("gethostbyname");
-		return 1;
+	if ( (he = gethostbyname( hostname.c_str() ) ) == NULL) {
+		throw "Could not get hostname";
 	}
 
 	addr_list = (struct in_addr **) he->h_addr_list;
 	
-	for(i = 0; addr_list[i] != NULL; i++) 
-	{
+	for(i = 0; addr_list[i] != nullptr; i++) 
+	{   
 		//Return the first one;
-		strcpy(ip , inet_ntoa(*addr_list[i]) );
-		return 0;
+        std::string istr(inet_ntoa(*addr_list[i]));
+		return istr;
 	}
 	
-	return 1;
+    throw "Reached end of hostname_to_ip !!! No not null address";
+
 }
 
-std::vector<mapping>& getIPMapping(std::string fname) {
+std::vector<mapping> getIPMapping(std::string fname) {
     std::ifstream domainfile(fname);
     std::string tmp;
     std::vector<mapping> domains;
     while (domainfile >> tmp) {
-        char ip[100];
-        hostname_to_ip(tmp.c_str(),ip);
-        std::string iptr(ip);
-        domains.push_back(mapping(tmp, ip));
+        std::string ipstr;
+        ipstr =hostname_to_ip(tmp.c_str());
+        domains.push_back(mapping(tmp, ipstr));
     }
     domainfile.close();
 
@@ -101,8 +98,7 @@ std::vector<mapping>& getIPMapping(std::string fname) {
 int main(int argc, char **argv) {
 	
 	if (argc < 2) {
-		fprintf(stderr, "NO INPUT ARGUMENTS");
-		return -1;
+		throw "No input parameters!";
 	}
 
     std::vector<mapping> domains = getIPMapping(argv[1]);
