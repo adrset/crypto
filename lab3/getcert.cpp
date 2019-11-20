@@ -164,7 +164,7 @@ std::vector<mapping> getDuplicates(std::vector<mapping> in) {
     std::vector<mapping> out;
     for (unsigned int ii=0; ii< in.size() -1; ii++ ){
         for (unsigned int jj=ii + 1; jj< in.size(); jj++ ){
-            if (in[ii].pubkey.compare(in[jj].pubkey) == 0 && in[ii].pubkey.length()x > 20) {
+            if (in[ii].pubkey.compare(in[jj].pubkey) == 0 && in[ii].pubkey.length() > 20) {
                 if(!in[ii].duplicate){
                     out.push_back(in[ii]);
                     in[ii].duplicate = true;
