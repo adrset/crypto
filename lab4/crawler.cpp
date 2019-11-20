@@ -61,16 +61,33 @@ std::string getDomain(std::string it) {
     pos = it.find(toReplace2);
     if(pos < it.length())
         it = it.replace(pos, toReplace2.length(), "");
-    size_t found1 =it.find_first_of("/");
-    it = it.substr(0, found1);
+    size_t found1 = it.find_first_of("/");
+    if(found1!=std::string::npos) {
+        it = it.substr(0, found1);
+    }
+
+    found1 = it.find_first_of("?");
+
+    if(found1!=std::string::npos) {
+        it = it.substr(0, found1);
+    }
+    found1 = it.find_first_of("#");
+
+    if(found1!=std::string::npos) {
+        it = it.substr(0, found1);
+    }
+
     return it;
 }
 
 std::set<std::string> getDomains(std::vector<std::string> in) {
         std::set<std::string> urls;
         for(auto& it : in) {
+            std::cout << it << std::endl;
+
             std::string domain = getDomain(it);
             urls.insert(domain);
+
         }
 
         return urls;
@@ -91,22 +108,8 @@ size_t CurlWrite_CallbackFunc_StdString(void *contents, size_t size, size_t nmem
     return newLength;
 }
 
-int main(int argc, char** argv) {
 
-    for (unsigned int ii = 10000; ii < 200000000; ii++) {
-        unsigned int verdict = gcd(ii, (ii+1)^2);
-        if (verdict != 1 && verdict != 3) 
-            std::cout << verdict << std::endl;
-    }
-
-    if (argc < 2) {
-        std::cout << "Please supply the url!"<<std::endl; 
-        return 1;
-    }
-
-    std::string urlin(argv[1]);
-    std::ofstream file("urls.txt");
-    std::vector<std::string> urls;
+std::string getResponse(std::string uri) {
     CURL *curl;
     CURLcode res;
     std::string subject;
@@ -114,17 +117,21 @@ int main(int argc, char** argv) {
     if(curl) {
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWrite_CallbackFunc_StdString);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &subject);
-        std::cout << urlin;
-        curl_easy_setopt(curl, CURLOPT_URL, urlin);
+        std::cout << uri;
+        curl_easy_setopt(curl, CURLOPT_URL, uri.c_str());
         res = curl_easy_perform(curl);
         std::cout << res;
         /* always cleanup */
         curl_easy_cleanup(curl);
     }
-    //std::cout<<subject;
+
+    return subject;
+}
+
+std::vector<std::string> getHrefs(std::vector<std::string> urls, std::string subject, std::string urlin) {
     try {
         std::regex pattern("<a\\s+(?:[^>]*?\\s+)?href=([\"'])(.*?)\\1");
-        std::sregex_iterator next(subject.begin(), subject.end(), pattern);
+        std::sregex_iterator next(subject.begin(), subject.end(),pattern);
         std::sregex_iterator end;
         while (next != end) {
             std::smatch match = *next;
@@ -139,7 +146,6 @@ int main(int argc, char** argv) {
             } else if (tmp.substr(0,1).compare("/") == 0) {
                 tmp = "http://" + getDomain(urlin) + tmp;
             }
-            std::cout<<getDomain(urlin);
             urls.push_back(tmp);
             next++;
         } 
@@ -147,10 +153,33 @@ int main(int argc, char** argv) {
     
     }
 
-    std::set<std::string> domains = getDomains(urls);
-    for (auto& it : domains) {
-        
+    return urls;
+}
+
+
+
+
+void writeDomains(std::set<std::string> in){
+    std::ofstream file("urls.txt");
+
+    for (auto& it : in) {
         file << it << std::endl;
     }
     file.close();
+}
+
+int main(int argc, char** argv) {
+    std::vector<std::string> urls;
+
+    if (argc < 2) {
+        std::cout << "Please supply the url!"<<std::endl; 
+        return 1;
+    }
+
+    std::string response = getResponse(std::string(argv[1]));
+    std::cout << response;
+    urls = getHrefs(urls, response, std::string(argv[1]));
+
+    std::set<std::string> domains = getDomains(urls);
+    writeDomains(domains);
 }
