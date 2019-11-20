@@ -3,6 +3,7 @@
 #include <regex> //jeśli mamy standard C++0x
 #include <stdio.h>
 #include <vector>
+#include <set>
 #include <fstream>
 /**
  * Euclidean algorithm 
@@ -51,6 +52,31 @@ unsigned int gcd_bin(unsigned int u, unsigned int v) {
     return gcd_bin((v - u) >> 1, u);
 }
 
+std::string getDomain(std::string it) {
+    std::string toReplace1("https://");
+    std::string toReplace2("http://");
+    size_t pos = it.find(toReplace1);
+    if(pos < it.length())
+        it = it.replace(pos, toReplace1.length(), "");
+    pos = it.find(toReplace2);
+    if(pos < it.length())
+        it = it.replace(pos, toReplace2.length(), "");
+    size_t found1 =it.find_first_of("/");
+    it = it.substr(0, found1);
+    return it;
+}
+
+std::set<std::string> getDomains(std::vector<std::string> in) {
+        std::set<std::string> urls;
+        for(auto& it : in) {
+            std::string domain = getDomain(it);
+            urls.insert(domain);
+        }
+
+        return urls;
+
+}
+
 size_t CurlWrite_CallbackFunc_StdString(void *contents, size_t size, size_t nmemb, std::string *s) {
     size_t newLength = size*nmemb;
     try
@@ -73,6 +99,12 @@ int main(int argc, char** argv) {
             std::cout << verdict << std::endl;
     }
 
+    if (argc < 2) {
+        std::cout << "Please supply the url!"<<std::endl; 
+        return 1;
+    }
+
+    std::string urlin(argv[1]);
     std::ofstream file("urls.txt");
     std::vector<std::string> urls;
     CURL *curl;
@@ -82,9 +114,10 @@ int main(int argc, char** argv) {
     if(curl) {
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWrite_CallbackFunc_StdString);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &subject);
-        curl_easy_setopt(curl, CURLOPT_URL, "https://www.google.com/search?sxsrf=ACYBGNTA3-9sN-8ePKolvLIDbwXLbdbr-Q%3A1573545893151&source=hp&ei=pWfKXfXsBof3qwGh0IOYDw&q=memy&oq=memy&gs_l=psy-ab.12...0.0..1968...0.0..0.0.0.......0......gws-wiz.&ved=0ahUKEwi10_yfm-TlAhWH-yoKHSHoAPMQ4dUDCAk");
+        std::cout << urlin;
+        curl_easy_setopt(curl, CURLOPT_URL, urlin);
         res = curl_easy_perform(curl);
-
+        std::cout << res;
         /* always cleanup */
         curl_easy_cleanup(curl);
     }
@@ -104,8 +137,9 @@ int main(int argc, char** argv) {
             if (tmp.substr(0,2).compare("//") == 0) {
                 tmp = "http:" + tmp;
             } else if (tmp.substr(0,1).compare("/") == 0) {
-                tmp = "http://google.com" + tmp;
+                tmp = "http://" + getDomain(urlin) + tmp;
             }
+            std::cout<<getDomain(urlin);
             urls.push_back(tmp);
             next++;
         } 
@@ -113,7 +147,9 @@ int main(int argc, char** argv) {
     
     }
 
-    for (auto& it : urls) {
+    std::set<std::string> domains = getDomains(urls);
+    for (auto& it : domains) {
+        
         file << it << std::endl;
     }
     file.close();
