@@ -29,6 +29,11 @@ struct mapping {
     void setPubkey(std::string in) {pubkey = in;}
     
 };
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
 std::ostream& operator<<(std::ostream& in, mapping m) {
         in << "h:" << m.hostname <<std::endl << "ip:" << m.ip <<std::endl  << "pkey:" << m.pubkey <<std::endl << std::endl ;
         return in;
@@ -152,10 +157,25 @@ std::vector<mapping> getDuplicates(std::vector<mapping> in) {
     return out;
 }
 
+void freeBN(std::vector<BIGNUM*> vec){
+    for(auto* it: vec) {
+        BN_free(it);
+    }
+}
+
 void listAll(std::vector<mapping> in) {
     for (mapping& it: in) {
         std::cout << it;
     }
+}
+
+void createDir(std::string name){
+    struct stat st = {0};
+
+    if (stat(name.c_str(), &st) == -1) {
+        mkdir(name.c_str(), 0700);
+        std::cout << "Creating directory '" << name << "'." << std::endl;
+    }   
 }
 
  
@@ -169,6 +189,8 @@ int main(int argc, char **argv) {
     std::cout << "Mapping start" << std::endl;
     std::vector<mapping> domains = getIPMapping(argv[1]);
     std::cout<< "Mapping done" << std::endl;
+    createDir("out");
+    std::vector <BIGNUM*> rsa_n;
     for (auto& it: domains) {
         struct sockaddr_in sa;
         SSL*     ssl;
@@ -202,7 +224,7 @@ int main(int argc, char **argv) {
                             
                             RSA *rsapubkey = getPublicKey(server_cert);
                             if (nullptr != rsapubkey) {
-                                printf("%s\n", BN_bn2dec(getN(rsapubkey)));
+                                rsa_n.push_back(BN_dup(getN(rsapubkey)));
                                 FILE * pliczek = fopen((OUT_FOLDER + "/" + it.hostname + ".txt").c_str(), "w");
                                 PEM_write_RSA_PUBKEY(pliczek, rsapubkey);
                                 RSA_free(rsapubkey);
@@ -227,9 +249,39 @@ int main(int argc, char **argv) {
         SSL_CTX_free (ctx);
     }
 
-    std::vector<mapping> duplicates = getDuplicates(domains);
-    std::cout << "Found " << duplicates.size() << " duplicates! " << std::endl;
-    listAll(duplicates);
+    for (auto* it : rsa_n) {
+        //printf("%s\n", BN_bn2dec(it));
+
+    }
+
+    // https://github.com/OneSignal/openssl/blob/master/crypto/bn/bn_gcd.c
+    // MAX Stack pool is 16! BN_CTX (BIGNUMBER stack)
+    unsigned int const MAX_CTX = 16;
+    BIGNUM* tmp = BN_new();
+    BN_CTX* ctx = BN_CTX_new();
+    int ret = 0;
+    for (unsigned int ii = 0; ii < rsa_n.size(); ii++){
+        for (unsigned int jj = ii + 1; jj < rsa_n.size(); jj++){
+            if (BN_cmp(rsa_n[ii], rsa_n[jj]) == 0) {
+                std::cout << std::endl;
+                printf("%s\n\nand \n\n%s \n\n are EQUAL\n\n", BN_bn2dec(rsa_n[ii]), BN_bn2dec(rsa_n[jj]));
+                std::cout << "================================" <<std::endl;
+            }else {
+                ret = BN_gcd(tmp, rsa_n[ii], rsa_n[jj], ctx);
+                std::cout << std::endl;
+                printf("%s\n\nvs \n\n%s \n\n gcd is \n\n%s\n\n", BN_bn2dec(rsa_n[ii]), BN_bn2dec(rsa_n[jj]), BN_bn2dec(tmp));
+                std::cout << "================================" <<std::endl;
+            }
+            
+
+        }
+    }
+
+    BN_CTX_free(ctx);
+    BN_free(tmp);
+    freeBN(rsa_n);
+
+
 
 }
 
