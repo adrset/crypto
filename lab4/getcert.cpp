@@ -14,6 +14,7 @@
 #include <sstream>
 #include <vector>
 #include <algorithm>
+#include <cstdio>
 const std::string OUT_FOLDER = "out";
 // Program stworzono korzystając z :
 // https://stackoverflow.com/questions/17852325/how-to-convert-the-x509-structure-into-string
@@ -195,7 +196,6 @@ int main(int argc, char **argv) {
         struct sockaddr_in sa;
         SSL*     ssl;
         X509*    server_cert;
-    
         SSLeay_add_ssl_algorithms();
         SSL_load_error_strings();
         SSL_CTX* ctx = SSL_CTX_new (SSLv23_method());
@@ -221,7 +221,8 @@ int main(int argc, char **argv) {
                         server_cert = SSL_get_peer_certificate(ssl);
                         if (server_cert!=nullptr) {
                             std::cout << "Fetched certificate for " <<  it.hostname << std::endl;
-                            
+                                    X509_print_fp(stdout,server_cert);
+
                             RSA *rsapubkey = getPublicKey(server_cert);
                             if (nullptr != rsapubkey) {
                                 rsa_n.push_back(BN_dup(getN(rsapubkey)));
