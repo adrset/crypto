@@ -50,6 +50,7 @@ EC_GROUP* create_curve(EC_Params& params) {
 	{ 0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
 		0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0x00,0x00,0x00,0x00,
 		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01 };
+	// Euler function value, basically number points in a group F_p
 	unsigned char order_bin[28] =
 	{ 0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
 		0xFF,0xFF,0xFF,0xFF,0x16,0xA2,0xE0,0xB8,0xF0,0x3E,
@@ -230,6 +231,7 @@ int main(int argc, char** argv) {
 	params.y = getParam("y");
 	// Create an EC_GROUP : Create Galois Field (finite group) of integers from 0 to p-1. p is a prime! Curve: y^2 mod p = x^3 +ax + b mod p 
 	// https://www.openssl.org/docs/man1.0.2/man3/EC_GROUP_new.html
+	// https://en.wikipedia.org/wiki/Elliptic_curve params must obey this
 	EC_GROUP* curve = create_curve(params);
 	// https://www.openssl.org/docs/man1.0.2/man3/EC_KEY_generate_key.html
 	// https://pl.wikipedia.org/wiki/Protok%C3%B3%C5%82_Diffiego-Hellmana
