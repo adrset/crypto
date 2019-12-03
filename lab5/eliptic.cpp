@@ -24,12 +24,6 @@ typedef struct EC_Params {
 	std::vector<unsigned char> y;
 } EC_Params;
 
-typedef struct _KEYPAIR {
-	BIGNUM* d;
-	EC_POINT* pub_key;
-	EC_KEY* key;
-} KEYPAIR;
-
 void handleErrors() {
 	std::cerr << "An error has been encountered!" << std::endl;
 	
