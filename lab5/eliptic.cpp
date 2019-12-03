@@ -37,7 +37,8 @@ void handleErrors() {
 
 
 EC_GROUP *create_curve(EC_Params& params){
-	std::cout << "1) Creating group" << std::endl;
+	std::cout << std::endl << std::endl << std::endl;
+	std::cout << "\n1) Creating group" << std::endl;
     BN_CTX *ctx;
     EC_GROUP *curve;
     BIGNUM *a, *b, *p, *order, *x, *y;
@@ -139,7 +140,13 @@ std::vector<unsigned char> getParam(std::string paramName) {
 	return a;
 }
 
-void printSecret(DHEntity* a, DHEntity* b) {
+void printSecret(DHEntity* a, DHEntity* b, bool invert = 0) {
+	if (invert) {
+		std::cout << "3b) Entity B got Entity A's public and computes d_B * Q_A" << std::endl;
+	}
+	else {
+		std::cout << "3a) Entity A got Entity B's public and computes d_A * Q_B" << std::endl;
+	}
 	unsigned char* secret;
 	int degree;
 	size_t len;
@@ -148,13 +155,14 @@ void printSecret(DHEntity* a, DHEntity* b) {
 	degree = EC_GROUP_get_degree(EC_KEY_get0_group(a->keyPair));
 	len = (degree + 7) / 8;
 	secret = OPENSSL_malloc(len);
+	std::cout << std::endl << std::endl;
 
 	len = ECDH_compute_key(secret, len, b->pub, a->keyPair, NULL);
-	std::cout << "SECRET BEGIN" << std::endl << "===========================" <<std::endl;
+	std::cout << "=============SECRET BEGIN==============" <<std::endl;
 	for (i = 0; i < len; i++)
 		printf("%02X", secret[i]);
-	std::cout << std::endl << "SECRET END" << std::endl << "===========================" << std::endl;
-
+	std::cout << std::endl << "=============+SECRET  END+==============" << std::endl;
+	std::cout << std::endl << std::endl ;
 	OPENSSL_free(secret);
 
 }
@@ -177,14 +185,44 @@ DHEntity* generateKey(EC_GROUP* curve) {
 	ent->x = BN_new();
 	ent->y = BN_new();
 	int status = EC_POINT_get_affine_coordinates_GFp(curve, ent->pub, ent->x, ent->y, ctx);
+	char buff[100];
 	if (status) {
-		std::cout << "Public key is represented by a point on the curve" << std::endl;
-		printf("Q(x, y): (%s, %s)\n", BN_bn2hex(ent->x), BN_bn2hex(ent->y));
+		std::cout << "\n\nPublic key is represented by a point on the curve" << std::endl;
+		printf("Q(x, y): (%s, %s)\n\n", BN_bn2hex(ent->x), BN_bn2hex(ent->y));
 	}
 	else {
 		handleErrors();
 	}
 	return ent;
+}
+
+
+void signAndVerify(EC_GROUP* curve) {
+	// Create empty key
+	EC_KEY* key = EC_KEY_new();
+	// Attach group to key
+	std::cout << std::endl;
+	EC_KEY_set_group(key, curve);
+	// Generate Key
+	EC_KEY_generate_key(key);
+	EC_KEY_check_key(key);
+	// We need to store the private key in EVP_PKEY
+	EVP_PKEY* pkey = EVP_PKEY_new();
+	
+	BIGNUM const* prv = EC_KEY_get0_private_key(key);
+	EC_POINT const* pub = EC_KEY_get0_public_key(key);
+	printf("%s\n", BN_bn2dec(prv));
+	std::cout << (pub) << std::endl;
+	
+	unsigned char* hashedMSG = "NOT HASHED MESSAGE";
+	ECDSA_SIG* sign = ECDSA_do_sign(hashedMSG, strlen((char*)hashedMSG), key);
+	if (sign == 0) {
+		std::cerr << "Verification :" << "EXCEPTION" << std::endl;
+		return;
+	}
+
+	std::string ret = (ECDSA_do_verify(hashedMSG, strlen((char*)hashedMSG), sign, key) ? "true" : "false");
+	std::cout << "Verification :" << ret  << std::endl;
 }
 
 
@@ -205,35 +243,9 @@ int main(int argc, char** argv) {
 	DHEntity* bob = generateKey(curve);
 	DHEntity* alice = generateKey(curve);
 	printSecret(alice, bob);
-	printSecret(bob, alice);
-	// Create empty key
-	/*EC_KEY* key = EC_KEY_new();
-	// Attach group to key
-	std::cout << std::endl;
-	std::cout << std::endl << "status" << EC_KEY_set_group(key, curve) << std::endl;
-	// Generate Key
-	std::cout << std::endl << "status" << EC_KEY_generate_key(key) << std::endl;
-	std::cout << std::endl << "status" << EC_KEY_check_key(key) << std::endl;
-	// We need to store the private key in EVP_PKEY
-	EVP_PKEY* pkey = EVP_PKEY_new();
-	//EVP_PKEY* EVP_PKEY_new(void);
-	//int EVP_PKEY_up_ref(EVP_PKEY * key);
-	//void EVP_PKEY_free(EVP_PKEY * key);
-	//std::cout << std::endl << "status" << EVP_PKEY_set1_EC_KEY(pkey, key) << std::endl;
-	//ECDSA_SIG* signature = ECDSA_do_sign((const unsigned char*)hashedMessage.c_str(), strlen(hashedMessage.c_str()), key);
-	//if (NULL == signature)
-	//{
-	//	printf("Failed to generate EC Signature\n");
-	//	return -1;
-	//}
-	BIGNUM const* prv = EC_KEY_get0_private_key(key);
-	BIGNUM* tmp = BN_new();
-	BN_CTX* ctx = BN_CTX_new();
-	EC_POINT const* pub = EC_KEY_get0_public_key(key);
-	printf("%s\n", BN_bn2dec(prv));
-	std::cout << (pub) << std::endl;
-	point_conversion_form_t form = EC_KEY_get_conv_form(key);
-	tmp = EC_POINT_point2bn(curve, key,form, BIGNUM * bn,BN_CTX * ctx);*/
+	printSecret(bob, alice, true);
+	
+	signAndVerify(curve);
 }
 
 
