@@ -1,15 +1,11 @@
 package ovh.ara;
 
 import java.security.SecureRandom;
-import java.util.Random;
 
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
-import org.bouncycastle.crypto.Digest;
 import org.bouncycastle.crypto.InvalidCipherTextException;
-import org.bouncycastle.crypto.digests.SHA256Digest;
 import org.bouncycastle.crypto.params.ParametersWithRandom;
 import org.bouncycastle.pqc.crypto.mceliece.*;
-import org.bouncycastle.util.test.SimpleTest;
 
 public class McElieceCipherTest {
     SecureRandom keyRandom = new SecureRandom();
@@ -23,7 +19,7 @@ public class McElieceCipherTest {
 
 
     public void performTest() throws InvalidCipherTextException {
-        byte[] mBytes;
+
         System.out.println("Encoding a message \n" + message);
         McElieceParameters params = new McElieceParameters();
         McElieceKeyPairGenerator mcElieceKeyGen = new McElieceKeyPairGenerator();
@@ -48,10 +44,7 @@ public class McElieceCipherTest {
         System.out.println("Length: " + x.getN() + " <-> Dimension: " + x.getK());
         byte[] constructedmessage = mcEliecePKCSDigestCipher.messageDecrypt(enc);
 
-        boolean verified = true;
         String decoded = new String(constructedmessage);
-
-
         if (!decoded.equals(message)) {
             throw new InvalidCipherTextException("en/decryption fails");
         } else {

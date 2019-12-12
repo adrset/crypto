@@ -2,13 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="a4dcf7a3-20cd-4705-b5eb-eeb280927ab8" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/../.gitmodules" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/pqcrypto/newhope/NewHope.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/pqcrypto/newhope/NewHopeTest.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/pqcrypto/newhope/NewHopeTor.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/pqcrypto/newhope/NewHopeTorTest.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/ovh/ara/McElieceCipherTest.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/ovh/ara/PQcrypto.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/ovh/ara/McElieceCipherTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/ovh/ara/McElieceCipherTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/ovh/ara/PQcrypto.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/ovh/ara/PQcrypto.java" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/out/" />
     <ignored path="$PROJECT_DIR$/target/" />
@@ -32,8 +27,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/main/java/ovh/ara/McElieceCipherTest.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="569">
-              <caret line="57" column="42" selection-start-line="57" selection-start-column="42" selection-end-line="57" selection-end-column="42" />
+            <state relative-caret-position="340">
+              <caret line="47" selection-start-line="47" selection-end-line="47" />
               <folding>
                 <element signature="imports" expanded="true" />
               </folding>
@@ -44,11 +39,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/main/java/ovh/ara/PQcrypto.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="401">
-              <caret line="49" lean-forward="true" selection-start-line="49" selection-end-line="55" selection-end-column="5" />
-              <folding>
-                <element signature="imports" expanded="true" />
-              </folding>
+            <state relative-caret-position="34">
+              <caret line="2" lean-forward="true" selection-start-line="2" selection-end-line="2" />
             </state>
           </provider>
         </entry>
@@ -144,7 +136,7 @@
     </panes>
   </component>
   <component name="PropertiesComponent">
-    <property name="com.android.tools.idea.instantapp.provision.ProvisionBeforeRunTaskProvider.myTimeStamp" value="1576179036894" />
+    <property name="com.android.tools.idea.instantapp.provision.ProvisionBeforeRunTaskProvider.myTimeStamp" value="1576179295052" />
     <property name="project.structure.last.edited" value="Modules" />
     <property name="project.structure.proportion" value="0.15" />
     <property name="project.structure.side.proportion" value="0.2" />
@@ -258,18 +250,15 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/main/java/ovh/ara/PQcrypto.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="401">
-          <caret line="49" lean-forward="true" selection-start-line="49" selection-end-line="55" selection-end-column="5" />
-          <folding>
-            <element signature="imports" expanded="true" />
-          </folding>
+        <state relative-caret-position="34">
+          <caret line="2" lean-forward="true" selection-start-line="2" selection-end-line="2" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/main/java/ovh/ara/McElieceCipherTest.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="569">
-          <caret line="57" column="42" selection-start-line="57" selection-start-column="42" selection-end-line="57" selection-end-column="42" />
+        <state relative-caret-position="340">
+          <caret line="47" selection-start-line="47" selection-end-line="47" />
           <folding>
             <element signature="imports" expanded="true" />
           </folding>
